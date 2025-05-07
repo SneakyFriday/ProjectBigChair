@@ -48,7 +48,7 @@ ExportedObj/
 *.opendb
 *.VC.db
 
-# Unity3D generated meta files
+# Ignore Unity generated meta files
 *.pidb.meta
 *.pdb.meta
 *.mdb.meta
@@ -56,15 +56,34 @@ ExportedObj/
 # Unity3D generated file on crash reports
 sysinfo.txt
 
-# Builds
+# Ignore compiled assemblies
+*.dll
+*.dll.mdb
+*.exe
+*.exe.mdb
+*.pdb
+*.ilk
+*.ipdb
+*.iobj
+
+# Ignore build output
+*.app
 *.apk
 *.aab
+*.xap
+*.msi
+*.appx
+*.appxbundle
 *.unitypackage
 *.unitypackage.meta
-*.app
 
 # Crashlytics generated file
 crashlytics-build.properties
+
+# Ignore crash reports
+sysinfo.txt
+error.log
+crash.dmp
 
 # Packed Addressables
 /[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
@@ -72,3 +91,9 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Ignore other files
+*.swp
+*.lock
+.DS_Store
+._*
