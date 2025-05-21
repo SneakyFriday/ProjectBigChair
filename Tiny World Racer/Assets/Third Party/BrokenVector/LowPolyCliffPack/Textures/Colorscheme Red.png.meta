@@ -79,5 +79,6 @@ AssetOrigin:
   productId: 67289
   packageName: Low Poly Cliff Pack
   packageVersion: 1.1
-  assetPath: Assets/BrokenVector/LowPolyCliffPack/Textures/Colorscheme Red.png
+  assetPath: Assets/Third Party/BrokenVector/LowPolyCliffPack/Textures/Colorscheme
+    Red.png
   uploadId: 252458
