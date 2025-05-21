@@ -87,5 +87,6 @@ AssetOrigin:
   productId: 67289
   packageName: Low Poly Cliff Pack
   packageVersion: 1.1
-  assetPath: Assets/BrokenVector/LowPolyCliffPack/Models/Rocktile Straight 1.dae
+  assetPath: Assets/Third Party/BrokenVector/LowPolyCliffPack/Models/Rocktile Straight
+    1.dae
   uploadId: 252458
