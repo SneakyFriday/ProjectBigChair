@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4736171060185591946}
   - component: {fileID: 8270244160333157176}
+  - component: {fileID: 546179467692491706}
   m_Layer: 0
   m_Name: RoadStart
   m_TagString: Untagged
@@ -55,6 +56,27 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2391379635145715318, guid: 3db4385d5bab9e24a81cb725c05598a0, type: 3}
+--- !u!65 &546179467692491706
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793620034340760404}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10.644275, y: 7.2187757, z: 0.6458988}
+  m_Center: {x: 6.259174, y: 2.7709346, z: 10.166907}
 --- !u!1001 &5128802033445692123
 PrefabInstance:
   m_ObjectHideFlags: 0

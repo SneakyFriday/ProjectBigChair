@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 434370876722397155}
   - component: {fileID: 2366251685495654730}
   - component: {fileID: 7212593841091511688}
+  - component: {fileID: 8241608378811250546}
   m_Layer: 0
   m_Name: Overhead
   m_TagString: Untagged
@@ -77,6 +78,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 11.278352, y: 6.6508594, z: 1.4237213}
   m_Center: {x: 5.139176, y: 2.3418915, z: -0.5337868}
+--- !u!114 &8241608378811250546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2322162051270147824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 764f51c3de434d24292472ebfa9ecfaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &7895802828218448350
 PrefabInstance:
   m_ObjectHideFlags: 0
