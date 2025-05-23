@@ -1,13 +1,19 @@
+using System;
 using UnityEngine;
 
 public class CheckpointController : MonoBehaviour
 {
     public static CheckpointController Instance { get; private set; }
 
-    [SerializeField] private Checkpoint[] m_checkpoints;
+    public event Action OnLapStart;
+    public event Action OnLapEnd;
+    public event Action<int> OnCheckpointReached;
 
-    private int m_nextCheckpointIndex = 0;
-    private bool lapStarted = false;
+    [Header("Checkpoints in Reihenfolge (Index 0 = Start-/Ziel)")]
+    [SerializeField] private Checkpoint[] checkpoints;
+
+    [SerializeField] private int nextCheckpointIndex = 0;
+    [SerializeField] private bool lapStarted = false;
 
     private void Awake()
     {
@@ -25,39 +31,35 @@ public class CheckpointController : MonoBehaviour
     {
         if (!lapStarted)
         {
-            if (checkpoint.CheckpointId == m_checkpoints[0].CheckpointId)
+            if (checkpoint.CheckpointId == 0)
             {
                 lapStarted = true;
-                m_nextCheckpointIndex = 1;
-                LapTimeController.Instance.StartLap();
-                Debug.Log("Runde gestartet! Fahre nun alle Checkpoints in der richtigen Reihenfolge ab.");
-            }
-            else
-            {
-                Debug.Log("Runde noch nicht gestartet – fahre zuerst über die Startlinie!");
+                nextCheckpointIndex = 1;
+
+                OnLapStart?.Invoke();
+
+                Debug.Log("Runde gestartet!");
             }
             return;
         }
 
-        if (checkpoint.CheckpointId == m_checkpoints[m_nextCheckpointIndex].CheckpointId)
+        if (checkpoint.CheckpointId == checkpoints[nextCheckpointIndex].CheckpointId)
         {
-            Debug.Log("Richtiger Checkpoint erreicht: " + checkpoint.CheckpointId);
-            LapTimeController.Instance.RecordCheckpoint(checkpoint.CheckpointId);
-            m_nextCheckpointIndex = (m_nextCheckpointIndex + 1) % m_checkpoints.Length;
+            OnCheckpointReached?.Invoke(checkpoint.CheckpointId);
 
-            if (m_nextCheckpointIndex == 0)
+            if (checkpoint.CheckpointId == 0)
             {
-                Debug.Log("Runde beendet!");
-                m_nextCheckpointIndex = 1;
+                OnLapEnd?.Invoke();
+                nextCheckpointIndex = 1;
+
+                Debug.Log("Runde abgeschlossen!");
             }
-            else
-            {
-                Debug.Log("Weiter zum nächsten Checkpoint (" + m_checkpoints[m_nextCheckpointIndex].CheckpointId + ").");
-            }
+
+            nextCheckpointIndex = (nextCheckpointIndex + 1) % checkpoints.Length;
         }
         else
         {
-            Debug.Log("Falscher Checkpoint! Erwartet wird Checkpoint " + m_checkpoints[m_nextCheckpointIndex].CheckpointId + ".");
+            Debug.Log("Falscher Checkpoint!");
         }
     }
 }

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4736171060185591946}
   - component: {fileID: 8270244160333157176}
   - component: {fileID: 546179467692491706}
+  - component: {fileID: 2734699031476185234}
   m_Layer: 0
   m_Name: RoadStart
   m_TagString: Untagged
@@ -32,6 +33,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4658854224915432752}
+  - {fileID: 2143260124767527463}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &8270244160333157176
@@ -77,6 +79,51 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10.644275, y: 7.2187757, z: 0.6458988}
   m_Center: {x: 6.259174, y: 2.7709346, z: 10.166907}
+--- !u!114 &2734699031476185234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793620034340760404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 764f51c3de434d24292472ebfa9ecfaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_CheckpointId: 0
+  m_RespawnPoint: {fileID: 2143260124767527463}
+--- !u!1 &3849190300205901003
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2143260124767527463}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2143260124767527463
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3849190300205901003}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.98, y: 1.86, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4736171060185591946}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &5128802033445692123
 PrefabInstance:
   m_ObjectHideFlags: 0

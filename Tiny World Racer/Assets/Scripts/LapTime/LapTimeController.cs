@@ -1,18 +1,12 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public class LapTimeController : MonoBehaviour
 {
     public static LapTimeController Instance { get; private set; }
 
-    [Header("LapTime Einstellungen")]
-    [SerializeField] private int lapHistoryLimit = 3;
-
-    public LapTime currentLap;
-    public LapTime BestLap { get; private set; }
-
-    private List<LapTime> lapHistory = new List<LapTime>();
-    private int lastCheckpointTimeMs;
+    [SerializeField] private LapTime[] lastLapTimes;
+    [SerializeField] private LapTime currentLapTime;
+    [SerializeField] private LapTime fastesLapTime;
 
     private void Awake()
     {
@@ -26,73 +20,71 @@ public class LapTimeController : MonoBehaviour
         }
     }
 
-    public void StartLap()
+    private void Start()
     {
-        LapTimer.Instance.StartTimer();
-        currentLap = new LapTime();
-        lastCheckpointTimeMs = 0;
+        lastLapTimes = new LapTime[3];
+        for (int i = 0; i < lastLapTimes.Length; i++)
+        {
+            lastLapTimes[i] = new LapTime();
+        }
 
-        Debug.Log("Neuer Lap gestartet.");
+        CheckpointController.Instance.OnLapStart += OnLapStartHandler;
+        CheckpointController.Instance.OnCheckpointReached += OnCheckpointReachedHandler;
+        CheckpointController.Instance.OnLapEnd += OnLapEndHandler;
     }
 
-    public void RecordCheckpoint(int checkpointId)
+    private void OnDisable()
     {
-        int currentTime = LapTimer.Instance.GetElapsedTimeMs();
+        CheckpointController.Instance.OnLapStart -= OnLapStartHandler;
+        CheckpointController.Instance.OnCheckpointReached -= OnCheckpointReachedHandler;
+        CheckpointController.Instance.OnLapStart -= OnLapStartHandler;
+    }
 
-        int splitTime = currentTime - lastCheckpointTimeMs;
-        lastCheckpointTimeMs = currentTime;
+    private void OnLapStartHandler()
+    {
+        currentLapTime = new LapTime();
+        Debug.Log("LapTimeController.OnLapStartHandler()");
+    }
 
-        switch (checkpointId)
+    private void OnCheckpointReachedHandler(int checkpointId)
+    {
+        switch(checkpointId)
         {
             case 1:
-                currentLap.SplitTimeA = splitTime;
-                Debug.Log("SplitTimeA (Start -> CP1): " + splitTime + " ms");
+                currentLapTime.SplitTimeA = LapTimer.Instance.GetLastSplitTimeMs();
                 break;
             case 2:
-                currentLap.SplitTimeB = splitTime;
-                Debug.Log("SplitTimeB (CP1 -> CP2): " + splitTime + " ms");
+                currentLapTime.SplitTimeB = LapTimer.Instance.GetLastSplitTimeMs();
                 break;
             case 3:
-                currentLap.SplitTimeC = splitTime;
-                Debug.Log("SplitTimeC (CP2 -> CP3): " + splitTime + " ms");
+                currentLapTime.SplitTimeC = LapTimer.Instance.GetLastSplitTimeMs();
                 break;
             case 4:
-                currentLap.SplitTimeD = splitTime;
-                Debug.Log("SplitTimeD (CP3 -> CP4): " + splitTime + " ms");
+                currentLapTime.SplitTimeD = LapTimer.Instance.GetLastSplitTimeMs();
                 break;
             case 0:
-                currentLap.SplitTimeF = splitTime;
-                Debug.Log("SplitTimeF (CP4 -> Start): " + splitTime + " ms");
-                CompleteLap();
+                currentLapTime.SplitTimeE = LapTimer.Instance.GetLastSplitTimeMs();
+                currentLapTime.TotalTimeMs = LapTimer.Instance.GetLastLapTimeMs();
                 break;
             default:
-                Debug.LogWarning("Ungültige Checkpoint-ID: " + checkpointId);
                 break;
         }
+
+        Debug.Log("LapTimeController.OnCheckpointReachedHandler()");
     }
 
-    public void CompleteLap()
+    private void OnLapEndHandler()
     {
-        currentLap.TotalTimeMs = LapTimer.Instance.GetElapsedTimeMs();
+        Debug.Log("LapTimeController.OnLapEndHandler()");
+        lastLapTimes[0] = new LapTime(lastLapTimes[1]);
+        lastLapTimes[1] = new LapTime(lastLapTimes[2]);
+        lastLapTimes[2] = new LapTime(currentLapTime);
 
-        lapHistory.Add(currentLap);
-        if (lapHistory.Count > lapHistoryLimit)
+        if (fastesLapTime == null || fastesLapTime.TotalTimeMs == 0 || currentLapTime.TotalTimeMs < fastesLapTime.TotalTimeMs)
         {
-            lapHistory.RemoveAt(0);
+            fastesLapTime = new LapTime(currentLapTime);
         }
 
-        if (BestLap == null || currentLap.TotalTimeMs < BestLap.TotalTimeMs)
-        {
-            BestLap = currentLap;
-        }
-
-        Debug.Log("Lap abgeschlossen: " + currentLap.TotalTimeMs + " ms");
-
-        StartLap();
-    }
-
-    public List<LapTime> GetLapHistory()
-    {
-        return lapHistory;
+        currentLapTime = new LapTime();
     }
 }
