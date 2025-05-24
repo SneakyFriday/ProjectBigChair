@@ -54,8 +54,10 @@ public class CheckpointController : MonoBehaviour
 
                 Debug.Log("Runde abgeschlossen!");
             }
-
-            nextCheckpointIndex = (nextCheckpointIndex + 1) % checkpoints.Length;
+            else
+            {
+                nextCheckpointIndex = (nextCheckpointIndex + 1) % checkpoints.Length;
+            }
         }
         else
         {
