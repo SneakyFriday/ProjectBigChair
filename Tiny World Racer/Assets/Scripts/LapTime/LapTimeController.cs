@@ -64,7 +64,6 @@ public class LapTimeController : MonoBehaviour
                 break;
             case 0:
                 currentLapTime.SplitTimeE = LapTimer.Instance.GetLastSplitTimeMs();
-                currentLapTime.TotalTimeMs = LapTimer.Instance.GetLastLapTimeMs();
                 break;
             default:
                 break;
@@ -76,6 +75,7 @@ public class LapTimeController : MonoBehaviour
     private void OnLapEndHandler()
     {
         Debug.Log("LapTimeController.OnLapEndHandler()");
+        currentLapTime.TotalTimeMs = LapTimer.Instance.GetLastLapTimeMs();
         lastLapTimes[0] = new LapTime(lastLapTimes[1]);
         lastLapTimes[1] = new LapTime(lastLapTimes[2]);
         lastLapTimes[2] = new LapTime(currentLapTime);
@@ -86,5 +86,15 @@ public class LapTimeController : MonoBehaviour
         }
 
         currentLapTime = new LapTime();
+    }
+
+    public LapTime GetFastestLapTime()
+    {
+        return fastesLapTime;
+    }
+
+    public LapTime GetLapTimeByIndex(int index)
+    { 
+        return lastLapTimes[index];
     }
 }

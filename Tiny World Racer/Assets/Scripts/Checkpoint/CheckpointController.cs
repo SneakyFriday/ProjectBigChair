@@ -12,6 +12,7 @@ public class CheckpointController : MonoBehaviour
     [Header("Checkpoints in Reihenfolge (Index 0 = Start-/Ziel)")]
     [SerializeField] private Checkpoint[] checkpoints;
 
+    [SerializeField] private int lastCheckpointReached = 0;
     [SerializeField] private int nextCheckpointIndex = 0;
     [SerializeField] private bool lapStarted = false;
 
@@ -29,6 +30,8 @@ public class CheckpointController : MonoBehaviour
 
     public void CheckCheckpoint(Checkpoint checkpoint)
     {
+        lastCheckpointReached = checkpoint.CheckpointId;
+
         if (!lapStarted)
         {
             if (checkpoint.CheckpointId == 0)
@@ -63,5 +66,10 @@ public class CheckpointController : MonoBehaviour
         {
             Debug.Log("Falscher Checkpoint!");
         }
+    }
+
+    public Checkpoint GetLastCheckpoint()
+    {
+        return checkpoints[lastCheckpointReached];
     }
 }
