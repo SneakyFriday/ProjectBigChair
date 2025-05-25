@@ -1,27 +1,36 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using TMPro;
+using UnityEngine.InputSystem;
 
 public class MainMenuController : MonoBehaviour
 {
     [Header("Menu Panels")]
-    public GameObject mainMenuPanel;
-    public GameObject settingsPanel;
+    [SerializeField] GameObject mainMenuPanel;
+    [SerializeField] GameObject settingsPanel;
+    [SerializeField] GameObject timeOverviewPanel;
     
     [Header("Main Menu Buttons")]
-    public Button playButton;
-    public Button settingsButton;
-    public Button quitButton;
+    [SerializeField] Button playButton;
+    [SerializeField] Button settingsButton;
+    [SerializeField] Button quitButton;
     
     [Header("Settings")]
-    public Slider volumeSlider;
-    public Toggle fullscreenToggle;
-    public TMP_Dropdown qualityDropdown;
-    public Button backButton;
+    [SerializeField] Slider volumeSlider;
+    [SerializeField] Toggle fullscreenToggle;
+    [SerializeField] TMP_Dropdown qualityDropdown;
+    [SerializeField] Button backButton;
     
     [Header("Scene Settings")]
-    public string gameSceneName = "GameScene";
+    public string gameSceneName = "GameScene"; // Falls wir in der Pro Version mit Scenes arbeiten sollten :P
+    
+    [Header("Game Control")]
+    [SerializeField] MovementController movementController;
+    [SerializeField] bool autoFindMovementController = true;
+    
+    private InputAction escapeAction;
+    private bool isGameActive = false;
     
     void Start()
     {
@@ -36,13 +45,70 @@ public class MainMenuController : MonoBehaviour
         fullscreenToggle.onValueChanged.AddListener(SetFullscreen);
         qualityDropdown.onValueChanged.AddListener(SetQuality);
         
+        InitializeEscapeInput();
+        
+        if (autoFindMovementController && !movementController)
+        {
+            movementController = FindFirstObjectByType<MovementController>();
+            if (!movementController)
+            {
+                Debug.LogWarning("MovementController konnte nicht gefunden werden! Bitte manuell zuweisen.");
+            }
+            else
+            {
+                Debug.Log("MovementController automatisch gefunden und zugewiesen.");
+            }
+        }
+        
         ShowMainMenu();
     }
+
+    private void Update()
+    {
+        if (escapeAction != null && escapeAction.WasPressedThisFrame())
+        {
+            HandleEscapePressed();
+        }
+    }
     
+    private void InitializeEscapeInput()
+    {
+        escapeAction = InputSystem.actions.FindAction("Cancel");
+        if (escapeAction == null)
+        {
+            escapeAction = new InputAction("Escape", binding: "<Keyboard>/escape");
+            escapeAction.Enable();
+        }
+    }
+    
+    private void HandleEscapePressed()
+    {
+        if (isGameActive)
+        {
+            PauseGame();
+            Debug.Log("Game paused with Escape key");
+        }
+        else if (settingsPanel.activeInHierarchy)
+        {
+            BackToMainMenu();
+        }
+    }
+
     void StartGame()
     {
         mainMenuPanel.SetActive(false);
-        // Controlls freigeben
+        timeOverviewPanel.SetActive(true);
+        isGameActive = true;
+        
+        if (movementController)
+        {
+            movementController.StartGame();
+            Debug.Log("Game started - Movement controls unlocked!");
+        }
+        else
+        {
+            Debug.LogError("MovementController ist nicht zugewiesen! Controls können nicht freigegeben werden.");
+        }
     }
     
     void OpenSettings()
@@ -55,12 +121,21 @@ public class MainMenuController : MonoBehaviour
     {
         SaveSettings();
         ShowMainMenu();
+        isGameActive = false;
+        
+        if (movementController && movementController.IsGameStarted)
+        {
+            movementController.StopGame();
+            Debug.Log("Returned to main menu - Movement controls locked!");
+        }
     }
     
     void ShowMainMenu()
     {
         mainMenuPanel.SetActive(true);
         settingsPanel.SetActive(false);
+        timeOverviewPanel.SetActive(false);
+        isGameActive = false;
     }
     
     void QuitGame()
@@ -110,5 +185,33 @@ public class MainMenuController : MonoBehaviour
     void SaveSettings()
     {
         PlayerPrefs.Save();
+    }
+    
+    // TODO: Dinge, die vllt mal in einem GameManger müssen irgendwann
+    public void StartGameProgrammatically()
+    {
+        StartGame();
+    }
+    
+    public void PauseGame()
+    {
+        if (movementController)
+        {
+            movementController.StopGame();
+        }
+        ShowMainMenu();
+    }
+    
+    public bool IsGameRunning()
+    {
+        return movementController && movementController.IsGameStarted;
+    }
+    
+    private void OnDestroy()
+    {
+        if (escapeAction == null) return;
+        
+        escapeAction.Disable();
+        escapeAction.Dispose();
     }
 }

@@ -31,6 +31,10 @@ public class MovementController : MonoBehaviour
     [Header("Vehicle Reset")]
     [SerializeField] float resetHeight = 1f;
     [SerializeField] bool resetClearsVelocity = true;
+    [SerializeField] bool useCheckpointRespawn = true;
+    
+    [Header("Game Control")]
+    [SerializeField] bool startControlsLocked = true;
     
     private Vector3 moveDirection;
     private float currentSpeed = 0f;
@@ -39,6 +43,7 @@ public class MovementController : MonoBehaviour
     private bool isHandbrakeActive = false;
     private bool isGrounded = false;
     private bool canControl = true;
+    private bool gameStarted = false;
     private bool justStartedInput = false;
     private int groundContactCount = 0;
     private float timeSinceGrounded = 0f;
@@ -52,12 +57,29 @@ public class MovementController : MonoBehaviour
     private bool handbrakePressed;
     private bool interactPressed;
     
+    public bool IsGameStarted => gameStarted;
+    public bool IsGrounded => isGrounded;
+    public bool CanControl => canControl;
+    public float TimeSinceGrounded => timeSinceGrounded;
+    
+    
     void Start()
     {
         InitializeInput();
         currentTraction = traction;
         initialRotation = transform.rotation;
         SetupGroundDetection();
+        
+        if (startControlsLocked)
+        {
+            gameStarted = false;
+            if (showGroundDebug)
+                Debug.Log("Controls are locked until game is started!");
+        }
+        else
+        {
+            gameStarted = true;
+        }
     }
     
     void Update()
@@ -73,7 +95,7 @@ public class MovementController : MonoBehaviour
         if(isHandbrakeActiveByDefault)
             HandleHandbrake(handbrakePressed);
         
-        if (canControl)
+        if (canControl && gameStarted)
         {
             ApplyForce();
             HandleSteering();
@@ -263,9 +285,7 @@ public class MovementController : MonoBehaviour
     
     private void ResetVehicle()
     {
-        Vector3 resetPosition = transform.position + Vector3.up * resetHeight;
-        transform.position = resetPosition;
-        transform.rotation = initialRotation;
+        RespawnAtLastCheckpoint();
         
         if (resetClearsVelocity)
         {
@@ -279,6 +299,50 @@ public class MovementController : MonoBehaviour
         
         if (showGroundDebug)
             Debug.Log("Vehicle reset to upright position!");
+    }
+    
+    private void RespawnVehicle()
+    {
+        if (useCheckpointRespawn && CheckpointController.Instance)
+        {
+            try
+            {
+                Checkpoint lastCheckpoint = CheckpointController.Instance.GetLastCheckpoint();
+                if (lastCheckpoint)
+                {
+                    lastCheckpoint.RespawnAtCheckpoint(gameObject);
+                    
+                    if (resetClearsVelocity)
+                    {
+                        currentSpeed = 0f;
+                        moveDirection = Vector3.zero;
+                        currentSteerInput = 0f;
+                    }
+                    
+                    timeSinceGrounded = 0f;
+                    canControl = true;
+                    
+                    if (showGroundDebug)
+                        Debug.Log($"Vehicle respawned at checkpoint {lastCheckpoint.CheckpointId}!");
+                    
+                    return;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Checkpoint respawn failed: {e.Message}. Using standard reset.");
+            }
+        }
+        
+        ResetVehicle();
+        
+        if (showGroundDebug && useCheckpointRespawn)
+            Debug.Log("No checkpoint available - used standard reset instead.");
+    }
+    
+    public void RespawnAtLastCheckpoint()
+    {
+        RespawnVehicle();
     }
     
     public void OnGroundEnter(Collider other)
@@ -314,10 +378,7 @@ public class MovementController : MonoBehaviour
         return hasGroundTag || hasGroundLayer;
     }
     
-    public bool IsGrounded => isGrounded;
-    public bool CanControl => canControl;
-    public float TimeSinceGrounded => timeSinceGrounded;
-    
+    // Public Methods
     public void ResetVehiclePosition()
     {
         ResetVehicle();
@@ -326,6 +387,44 @@ public class MovementController : MonoBehaviour
     public void SetHandbrake(bool active)
     {
         HandleHandbrake(active);
+    }
+    
+    public void StartGame()
+    {
+        gameStarted = true;
+        ResetVehicleToStart();
+        if (showGroundDebug)
+            Debug.Log("Game started - Controls unlocked!");
+    }
+    
+    public void ResetVehicleToStart()
+    {
+        transform.position = transform.position;
+        transform.rotation = initialRotation;
+        
+        currentSpeed = 0f;
+        moveDirection = Vector3.zero;
+        currentSteerInput = 0f;
+        
+        isHandbrakeActive = false;
+        currentTraction = traction;
+        
+        timeSinceGrounded = 0f;
+        canControl = true;
+        justStartedInput = false;
+        
+        inputVector = Vector3.zero;
+        lastInputVector = Vector3.zero;
+        
+        if (showGroundDebug)
+            Debug.Log("Vehicle reset to starting state!");
+    }
+    
+    public void StopGame()
+    {
+        gameStarted = false;
+        if (showGroundDebug)
+            Debug.Log("Game stopped - Controls locked!");
     }
 }
 
@@ -340,13 +439,13 @@ public class GroundDetector : MonoBehaviour
     
     private void OnTriggerEnter(Collider other)
     {
-        if (parentController != null)
+        if (parentController)
             parentController.OnGroundEnter(other);
     }
     
     private void OnTriggerExit(Collider other)
     {
-        if (parentController != null)
+        if (parentController)
             parentController.OnGroundExit(other);
     }
 }
