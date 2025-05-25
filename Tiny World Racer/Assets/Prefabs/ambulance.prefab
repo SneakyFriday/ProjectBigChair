@@ -350,9 +350,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7fec4b50be8554c4d9a4d03f32bb30d8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8958520315234410930}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7fec4b50be8554c4d9a4d03f32bb30d8, type: 3}
+    - targetCorrespondingSourceObject: {fileID: -4819223349682164798, guid: 7fec4b50be8554c4d9a4d03f32bb30d8, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2265825559100928318}
+      addedObject: {fileID: 1982421363508450973}
   m_SourcePrefab: {fileID: 100100000, guid: 7fec4b50be8554c4d9a4d03f32bb30d8, type: 3}
 --- !u!4 &1194689646094967893 stripped
 Transform:
@@ -364,6 +364,32 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8565876716882154066, guid: 7fec4b50be8554c4d9a4d03f32bb30d8, type: 3}
   m_PrefabInstance: {fileID: 7212758106509137663}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6414938611353320765 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4819223349682164798, guid: 7fec4b50be8554c4d9a4d03f32bb30d8, type: 3}
+  m_PrefabInstance: {fileID: 7212758106509137663}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &1982421363508450973
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6414938611353320765}
+  m_Material: {fileID: 13400000, guid: 15713eff5bf2b3340b52d1d57c772d61, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.247293, y: 1.5728357, z: 2.9398956}
+  m_Center: {x: -0.005187273, y: 0.62161124, z: -0.065999985}
 --- !u!1 &7555268421551057838 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7fec4b50be8554c4d9a4d03f32bb30d8, type: 3}
@@ -394,6 +420,14 @@ MonoBehaviour:
   handbrakeDrag: 0.93
   handbrakeSteerMultiplier: 1.5
   handbrakeRecoverySpeed: 2
+  showGroundDebug: 1
+  groundTag: Ground
+  airControlDelay: 0.2
+  airDrag: 0.995
+  resetHeight: 1
+  resetClearsVelocity: 1
+  useCheckpointRespawn: 1
+  startControlsLocked: 1
 --- !u!54 &8958520315234410930
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -421,24 +455,3 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!65 &2265825559100928318
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7555268421551057838}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1.798335, z: 3.015554}
-  m_Center: {x: 0, y: 0.9316817, z: -0.027728736}
