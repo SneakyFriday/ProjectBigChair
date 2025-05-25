@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
     
     private void Awake()
     {
-        if (instance != null && instance != this)
+        if (instance && instance != this)
         {
             Destroy(gameObject);
             return;
@@ -78,7 +78,7 @@ public class GameManager : MonoBehaviour
     {
         gameStarted = true;
         isPaused = false;
-        
+        Time.timeScale = 1f;
         OnGameStart?.Invoke();
         
         if (showDebugMessages)
@@ -88,9 +88,8 @@ public class GameManager : MonoBehaviour
     public void StopGame()
     {
         gameStarted = false;
-        
+        Time.timeScale = 1f;
         OnGameStop?.Invoke();
-        
         if (showDebugMessages)
             Debug.Log("Game Stopped!");
     }
@@ -190,10 +189,25 @@ public class GameManager : MonoBehaviour
     
     public void RestartLevel()
     {
+        bool wasPaused = isPaused;
+        if (wasPaused)
+        {
+            isPaused = false;
+            Time.timeScale = 1f;
+        }
+        
         MovementController[] allVehicles = FindObjectsByType<MovementController>(FindObjectsSortMode.None);
         foreach (var vehicle in allVehicles)
         {
-            vehicle.ResetToStartPosition();
+            if (vehicle != null)
+            {
+                vehicle.ResetToStartPosition();
+                
+                if (resetVelocityOnRespawn)
+                {
+                    vehicle.ResetVelocity();
+                }
+            }
         }
         
         if (CheckpointController.Instance)

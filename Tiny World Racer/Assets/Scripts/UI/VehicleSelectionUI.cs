@@ -106,7 +106,7 @@ public class VehicleSelectionUI : MonoBehaviour
         
         if (!vehicleSelector.IsVehicleSelectionAvailable())
         {
-            Debug.LogWarning("Vehicle selection not available during gameplay!");
+            Debug.LogWarning("Vehicle selection not available during active gameplay!");
             return;
         }
         
@@ -114,6 +114,12 @@ public class VehicleSelectionUI : MonoBehaviour
         if (vehicleCount > 1)
         {
             currentPreviewIndex = (currentPreviewIndex - 1 + vehicleCount) % vehicleCount;
+            
+            if (GameManager.Instance && (GameManager.Instance.IsPaused || !GameManager.Instance.IsGameStarted))
+            {
+                vehicleSelector.SpawnPreviewVehicle(currentPreviewIndex);
+            }
+            
             UpdateVehicleDisplay();
             PlayHoverSound();
         }
@@ -125,7 +131,7 @@ public class VehicleSelectionUI : MonoBehaviour
         
         if (!vehicleSelector.IsVehicleSelectionAvailable())
         {
-            Debug.LogWarning("Vehicle selection not available during gameplay!");
+            Debug.LogWarning("Vehicle selection not available during active gameplay!");
             return;
         }
         
@@ -133,8 +139,12 @@ public class VehicleSelectionUI : MonoBehaviour
         if (vehicleCount > 1)
         {
             currentPreviewIndex = (currentPreviewIndex + 1) % vehicleCount;
-            UpdateVehicleDisplay();
+            if (GameManager.Instance && (GameManager.Instance.IsPaused || !GameManager.Instance.IsGameStarted))
+            {
+                vehicleSelector.SpawnPreviewVehicle(currentPreviewIndex);
+            }
             
+            UpdateVehicleDisplay();
             PlayHoverSound();
         }
     }
@@ -241,6 +251,23 @@ public class VehicleSelectionUI : MonoBehaviour
         
         if (confirmButton)
             confirmButton.interactable = selectionAvailable;
+        
+        if (GameManager.Instance && GameManager.Instance.IsPaused)
+        {
+            if (confirmButton && confirmButton.GetComponentInChildren<TextMeshProUGUI>())
+            {
+                var buttonText = confirmButton.GetComponentInChildren<TextMeshProUGUI>();
+                buttonText.text = "Select & Resume";
+            }
+        }
+        else
+        {
+            if (confirmButton && confirmButton.GetComponentInChildren<TextMeshProUGUI>())
+            {
+                var buttonText = confirmButton.GetComponentInChildren<TextMeshProUGUI>();
+                buttonText.text = "Confirm";
+            }
+        }
     }
     
     void PlayHoverSound()
@@ -266,7 +293,6 @@ public class VehicleSelectionUI : MonoBehaviour
     {
         Debug.Log("=== OpenVehicleSelection called! ===");
         
-        // Check VehicleSelector
         if (!vehicleSelector)
         {
             vehicleSelector = VehicleSelector.Instance;
@@ -289,6 +315,11 @@ public class VehicleSelectionUI : MonoBehaviour
         
         currentPreviewIndex = vehicleSelector.GetSelectedVehicleIndex();
         Debug.Log($"Current preview index: {currentPreviewIndex}");
+        
+        if (GameManager.Instance && (GameManager.Instance.IsPaused || !GameManager.Instance.IsGameStarted))
+        {
+            vehicleSelector.SpawnPreviewVehicle(currentPreviewIndex);
+        }
         
         if (mainMenuPanel)
         {

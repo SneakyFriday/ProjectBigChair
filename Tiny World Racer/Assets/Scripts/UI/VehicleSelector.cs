@@ -47,7 +47,7 @@ public class VehicleSelector : MonoBehaviour
     
     private void Awake()
     {
-        if (instance != null && instance != this)
+        if (instance && instance != this)
         {
             Destroy(gameObject);
             return;
@@ -59,7 +59,7 @@ public class VehicleSelector : MonoBehaviour
     
     private void Start()
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance)
         {
             GameManager.Instance.OnGameStart.AddListener(OnGameStart);
             
@@ -76,7 +76,7 @@ public class VehicleSelector : MonoBehaviour
     
     private void OnDestroy()
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance)
         {
             GameManager.Instance.OnGameStart.RemoveListener(OnGameStart);
         }
@@ -92,7 +92,7 @@ public class VehicleSelector : MonoBehaviour
     /// </summary>
     public void SpawnSelectedVehicle()
     {
-        if (currentVehicleInstance != null && keepPreviewAsPlayer)
+        if (currentVehicleInstance && keepPreviewAsPlayer)
         {
             if (currentVehicleInstance.name.Contains("(Preview)"))
             {
@@ -108,7 +108,7 @@ public class VehicleSelector : MonoBehaviour
             }
         }
         
-        if (currentVehicleInstance != null)
+        if (currentVehicleInstance)
         {
             Destroy(currentVehicleInstance);
         }
@@ -127,19 +127,19 @@ public class VehicleSelector : MonoBehaviour
         
         VehicleData selectedVehicle = availableVehicles[selectedVehicleIndex];
         
-        if (selectedVehicle.vehiclePrefab == null)
+        if (!selectedVehicle.vehiclePrefab)
         {
             Debug.LogError($"Vehicle {selectedVehicle.vehicleName} has no prefab assigned!");
             return;
         }
         
-        Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
-        Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+        Vector3 spawnPosition = spawnPoint ? spawnPoint.position : Vector3.zero;
+        Quaternion spawnRotation = spawnPoint ? spawnPoint.rotation : Quaternion.identity;
         
         currentVehicleInstance = Instantiate(selectedVehicle.vehiclePrefab, spawnPosition, spawnRotation);
         currentVehicleInstance.name = selectedVehicle.vehicleName + " (Player)";
         
-        if (CameraManager.Instance != null)
+        if (CameraManager.Instance)
         {
             CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
             CameraManager.Instance.SetCockpitPreset(selectedVehicle.vehicleType);
@@ -160,26 +160,26 @@ public class VehicleSelector : MonoBehaviour
             return;
         }
         
-        if (currentVehicleInstance != null)
+        if (currentVehicleInstance)
         {
             Destroy(currentVehicleInstance);
         }
         
         VehicleData vehicleToPreview = availableVehicles[index];
         
-        if (vehicleToPreview.vehiclePrefab == null)
+        if (!vehicleToPreview.vehiclePrefab)
         {
             Debug.LogError($"Vehicle {vehicleToPreview.vehicleName} has no prefab assigned!");
             return;
         }
         
-        Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
-        Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+        Vector3 spawnPosition = spawnPoint ? spawnPoint.position : Vector3.zero;
+        Quaternion spawnRotation = spawnPoint ? spawnPoint.rotation : Quaternion.identity;
         
         currentVehicleInstance = Instantiate(vehicleToPreview.vehiclePrefab, spawnPosition, spawnRotation);
         currentVehicleInstance.name = vehicleToPreview.vehicleName + " (Preview)";
         
-        if (CameraManager.Instance != null)
+        if (CameraManager.Instance)
         {
             CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
             CameraManager.Instance.SetCockpitPreset(vehicleToPreview.vehicleType);
@@ -189,7 +189,7 @@ public class VehicleSelector : MonoBehaviour
     }
     
     /// <summary>
-    /// Select a vehicle by index
+    /// Select a vehicle by index and spawn it immediately if needed
     /// </summary>
     public void SelectVehicle(int index)
     {
@@ -197,7 +197,12 @@ public class VehicleSelector : MonoBehaviour
         {
             selectedVehicleIndex = index;
             Debug.Log($"Selected vehicle: {availableVehicles[index].vehicleName}");
-            if (currentVehicleInstance != null && currentVehicleInstance.name.Contains("(Preview)"))
+            
+            if (GameManager.Instance && (GameManager.Instance.IsPaused || !GameManager.Instance.IsGameStarted))
+            {
+                SpawnSelectedVehicle();
+            }
+            else if (currentVehicleInstance && currentVehicleInstance.name.Contains("(Preview)"))
             {
                 currentVehicleInstance.name = availableVehicles[index].vehicleName + " (Player)";
             }
@@ -245,13 +250,13 @@ public class VehicleSelector : MonoBehaviour
     }
     
     /// <summary>
-    /// Check if vehicle selection is available (not during gameplay)
+    /// Check if vehicle selection is available (not during active gameplay)
     /// </summary>
     public bool IsVehicleSelectionAvailable()
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance)
         {
-            return !GameManager.Instance.IsGameStarted;
+            return !GameManager.Instance.IsGameStarted || GameManager.Instance.IsPaused;
         }
         return true;
     }
@@ -277,21 +282,21 @@ public class VehicleSelector : MonoBehaviour
     /// </summary>
     public void RespawnVehicle()
     {
-        if (currentVehicleInstance != null)
+        if (currentVehicleInstance)
         {
-            Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
-            Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+            Vector3 spawnPosition = spawnPoint ? spawnPoint.position : Vector3.zero;
+            Quaternion spawnRotation = spawnPoint ? spawnPoint.rotation : Quaternion.identity;
             
             currentVehicleInstance.transform.position = spawnPosition;
             currentVehicleInstance.transform.rotation = spawnRotation;
             
             MovementController movement = currentVehicleInstance.GetComponent<MovementController>();
-            if (movement != null)
+            if (movement)
             {
                 movement.ResetVelocity();
             }
             
-            if (CameraManager.Instance != null)
+            if (CameraManager.Instance)
             {
                 CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
             }
@@ -300,7 +305,7 @@ public class VehicleSelector : MonoBehaviour
     
     private void OnDrawGizmos()
     {
-        if (spawnPoint != null)
+        if (spawnPoint)
         {
             Gizmos.color = Color.green;
             Gizmos.DrawWireCube(spawnPoint.position, Vector3.one);

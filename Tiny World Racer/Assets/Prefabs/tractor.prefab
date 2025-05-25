@@ -384,8 +384,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1137baf70fb6e524ea7238a6d0ce50d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 100
-  maxSpeed: 150
+  moveSpeed: 80
+  maxSpeed: 100
   drag: 0.98
   traction: 2
   steerAngle: 15

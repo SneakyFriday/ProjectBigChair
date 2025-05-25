@@ -21,7 +21,6 @@ public class MainMenuController : MonoBehaviour
     [Header("Settings")]
     [SerializeField] Slider volumeSlider;
     [SerializeField] Toggle fullscreenToggle;
-    [SerializeField] TMP_Dropdown qualityDropdown;
     [SerializeField] Button backButton;
     
     [Header("Scene Settings")]
@@ -29,6 +28,7 @@ public class MainMenuController : MonoBehaviour
     
     private InputAction escapeAction;
     private bool isGameActive = false;
+    private bool isGamePaused = false;
     
     void Start()
     {
@@ -42,7 +42,6 @@ public class MainMenuController : MonoBehaviour
        
         volumeSlider.onValueChanged.AddListener(SetVolume);
         fullscreenToggle.onValueChanged.AddListener(SetFullscreen);
-        qualityDropdown.onValueChanged.AddListener(SetQuality);
         
         var btnTxt = playButton.GetComponentInChildren<TextMeshProUGUI>();
         btnTxt.text = "Start";
@@ -60,7 +59,6 @@ public class MainMenuController : MonoBehaviour
         vehicleSelectButton.onClick.RemoveAllListeners();
         volumeSlider.onValueChanged.RemoveAllListeners();
         fullscreenToggle.onValueChanged.RemoveAllListeners();
-        qualityDropdown.onValueChanged.RemoveAllListeners();
     }
 
     private void Update()
@@ -88,9 +86,9 @@ public class MainMenuController : MonoBehaviour
     
     private void HandleEscapePressed()
     {
-        if (isGameActive)
+        if (isGameActive && !isGamePaused)
         {
-            PauseGame();
+            PauseGameWithUI();
             Debug.Log("Game paused with Escape key");
         }
         else if (settingsPanel.activeInHierarchy)
@@ -104,6 +102,9 @@ public class MainMenuController : MonoBehaviour
         mainMenuPanel.SetActive(false);
         timeOverviewPanel.SetActive(true);
         isGameActive = true;
+        isGamePaused = false;
+        
+        ResetPlayButtonToStart();
         
         if (GameManager.Instance)
         {
@@ -127,6 +128,9 @@ public class MainMenuController : MonoBehaviour
         SaveSettings();
         ShowMainMenu();
         isGameActive = false;
+        isGamePaused = false;
+        
+        ResetPlayButtonToStart();
         
         if (GameManager.Instance.IsGameStarted)
         {
@@ -166,12 +170,6 @@ public class MainMenuController : MonoBehaviour
         PlayerPrefs.SetInt("Fullscreen", isFullscreen ? 1 : 0);
     }
     
-    void SetQuality(int qualityIndex)
-    {
-        QualitySettings.SetQualityLevel(qualityIndex);
-        PlayerPrefs.SetInt("QualityLevel", qualityIndex);
-    }
-    
     void LoadSettings()
     {
         float savedVolume = PlayerPrefs.GetFloat("MasterVolume", 1f);
@@ -181,10 +179,6 @@ public class MainMenuController : MonoBehaviour
         bool isFullscreen = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
         fullscreenToggle.isOn = isFullscreen;
         Screen.fullScreen = isFullscreen;
-        
-        int qualityLevel = PlayerPrefs.GetInt("QualityLevel", QualitySettings.GetQualityLevel());
-        qualityDropdown.value = qualityLevel;
-        QualitySettings.SetQualityLevel(qualityLevel);
     }
     
     void SaveSettings()
@@ -198,21 +192,59 @@ public class MainMenuController : MonoBehaviour
         StartGame();
     }
     
-    public void PauseGame()
+    public void PauseGameWithUI()
     {
         if (GameManager.Instance)
         {
-            GameManager.Instance.StopGame();
+            GameManager.Instance.PauseGame();
         }
+        
+        isGamePaused = true;
+        
         playButton.onClick.RemoveAllListeners();
         var btnTxt = playButton.GetComponentInChildren<TextMeshProUGUI>();
         btnTxt.text = "Restart";
-        playButton.onClick.AddListener(GameManager.Instance.RestartLevel);
+        playButton.onClick.AddListener(RestartGame);
+        
         ShowMainMenu();
+    }
+    
+    public void RestartGame()
+    {
+        if (GameManager.Instance)
+        {
+            if (GameManager.Instance.IsPaused)
+            {
+                GameManager.Instance.ResumeGame();
+            }
+            GameManager.Instance.RestartLevel();
+        }
+        
+        mainMenuPanel.SetActive(false);
+        timeOverviewPanel.SetActive(true);
+        isGameActive = true;
+        isGamePaused = false;
+        
+        ResetPlayButtonToStart();
+        
+        Debug.Log("Game restarted - Movement controls unlocked!");
+    }
+    
+    private void ResetPlayButtonToStart()
+    {
+        playButton.onClick.RemoveAllListeners();
+        var btnTxt = playButton.GetComponentInChildren<TextMeshProUGUI>();
+        btnTxt.text = "Start";
+        playButton.onClick.AddListener(StartGame);
     }
     
     public bool IsGameRunning()
     {
         return GameManager.Instance.IsGameStarted;
+    }
+    
+    public bool IsGamePaused()
+    {
+        return isGamePaused;
     }
 }
