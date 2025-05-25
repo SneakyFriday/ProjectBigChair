@@ -26,8 +26,8 @@ public class VehicleSelector : MonoBehaviour
     {
         get
         {
-            if (instance == null)
-                instance = FindObjectOfType<VehicleSelector>();
+            if (!instance)
+                instance = FindFirstObjectByType<VehicleSelector>();
             return instance;
         }
     }
@@ -59,12 +59,10 @@ public class VehicleSelector : MonoBehaviour
     
     private void Start()
     {
-        // Subscribe to GameManager events if available
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnGameStart.AddListener(OnGameStart);
             
-            // If autoSpawn is enabled and game is already started, spawn now
             if (autoSpawnOnStart && GameManager.Instance.IsGameStarted)
             {
                 SpawnSelectedVehicle();
@@ -72,7 +70,6 @@ public class VehicleSelector : MonoBehaviour
         }
         else if (autoSpawnOnStart)
         {
-            // If no GameManager, spawn immediately if autoSpawn is enabled
             SpawnSelectedVehicle();
         }
     }
@@ -95,10 +92,8 @@ public class VehicleSelector : MonoBehaviour
     /// </summary>
     public void SpawnSelectedVehicle()
     {
-        // If we already have a vehicle (from preview) and keepPreviewAsPlayer is enabled, don't spawn a new one
         if (currentVehicleInstance != null && keepPreviewAsPlayer)
         {
-            // Just rename it from preview to player
             if (currentVehicleInstance.name.Contains("(Preview)"))
             {
                 VehicleData currentVehicle = availableVehicles[selectedVehicleIndex];
@@ -113,27 +108,23 @@ public class VehicleSelector : MonoBehaviour
             }
         }
         
-        // Remove existing vehicle if any
         if (currentVehicleInstance != null)
         {
             Destroy(currentVehicleInstance);
         }
         
-        // Check if we have vehicles configured
         if (availableVehicles.Count == 0)
         {
             Debug.LogError("No vehicles configured in VehicleSelector!");
             return;
         }
         
-        // Validate index
         if (selectedVehicleIndex < 0 || selectedVehicleIndex >= availableVehicles.Count)
         {
             Debug.LogWarning($"Invalid vehicle index {selectedVehicleIndex}, using default");
             selectedVehicleIndex = 0;
         }
         
-        // Get selected vehicle data
         VehicleData selectedVehicle = availableVehicles[selectedVehicleIndex];
         
         if (selectedVehicle.vehiclePrefab == null)
@@ -142,15 +133,12 @@ public class VehicleSelector : MonoBehaviour
             return;
         }
         
-        // Determine spawn position and rotation
         Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
         Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
         
-        // Spawn the vehicle
         currentVehicleInstance = Instantiate(selectedVehicle.vehiclePrefab, spawnPosition, spawnRotation);
         currentVehicleInstance.name = selectedVehicle.vehicleName + " (Player)";
         
-        // Update CameraManager to follow the new vehicle
         if (CameraManager.Instance != null)
         {
             CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
@@ -166,14 +154,12 @@ public class VehicleSelector : MonoBehaviour
     /// </summary>
     public void SpawnPreviewVehicle(int index)
     {
-        // Validate index
         if (index < 0 || index >= availableVehicles.Count)
         {
             Debug.LogWarning($"Invalid preview vehicle index: {index}");
             return;
         }
         
-        // Remove existing vehicle if any
         if (currentVehicleInstance != null)
         {
             Destroy(currentVehicleInstance);
@@ -187,15 +173,12 @@ public class VehicleSelector : MonoBehaviour
             return;
         }
         
-        // Determine spawn position and rotation
         Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
         Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
         
-        // Spawn the vehicle
         currentVehicleInstance = Instantiate(vehicleToPreview.vehiclePrefab, spawnPosition, spawnRotation);
         currentVehicleInstance.name = vehicleToPreview.vehicleName + " (Preview)";
         
-        // Update CameraManager to follow the preview vehicle
         if (CameraManager.Instance != null)
         {
             CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
@@ -214,8 +197,6 @@ public class VehicleSelector : MonoBehaviour
         {
             selectedVehicleIndex = index;
             Debug.Log($"Selected vehicle: {availableVehicles[index].vehicleName}");
-            
-            // If we already have a preview vehicle and it's the selected one, just rename it
             if (currentVehicleInstance != null && currentVehicleInstance.name.Contains("(Preview)"))
             {
                 currentVehicleInstance.name = availableVehicles[index].vehicleName + " (Player)";
@@ -268,7 +249,6 @@ public class VehicleSelector : MonoBehaviour
     /// </summary>
     public bool IsVehicleSelectionAvailable()
     {
-        // Only allow vehicle selection when game hasn't started
         if (GameManager.Instance != null)
         {
             return !GameManager.Instance.IsGameStarted;
@@ -305,14 +285,12 @@ public class VehicleSelector : MonoBehaviour
             currentVehicleInstance.transform.position = spawnPosition;
             currentVehicleInstance.transform.rotation = spawnRotation;
             
-            // Reset velocity if vehicle has MovementController
             MovementController movement = currentVehicleInstance.GetComponent<MovementController>();
             if (movement != null)
             {
                 movement.ResetVelocity();
             }
             
-            // Update camera to make sure it's still following
             if (CameraManager.Instance != null)
             {
                 CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
@@ -320,7 +298,6 @@ public class VehicleSelector : MonoBehaviour
         }
     }
     
-    // Draw spawn point in editor
     private void OnDrawGizmos()
     {
         if (spawnPoint != null)

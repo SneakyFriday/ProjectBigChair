@@ -157,7 +157,6 @@ public class VehicleSelectionUI : MonoBehaviour
         if (mainMenuPanel)
             mainMenuPanel.SetActive(true);
         
-        // Vehicle stays spawned for preview
         Debug.Log("Returned to main menu - preview vehicle remains spawned");
     }
     
@@ -280,7 +279,6 @@ public class VehicleSelectionUI : MonoBehaviour
         
         Debug.Log("VehicleSelector found!");
         
-        // Check if selection is available
         if (!vehicleSelector.IsVehicleSelectionAvailable())
         {
             Debug.LogWarning("Vehicle selection not available! IsVehicleSelectionAvailable() returned false.");
@@ -292,7 +290,6 @@ public class VehicleSelectionUI : MonoBehaviour
         currentPreviewIndex = vehicleSelector.GetSelectedVehicleIndex();
         Debug.Log($"Current preview index: {currentPreviewIndex}");
         
-        // Check and handle panels
         if (mainMenuPanel)
         {
             Debug.Log($"Deactivating main menu panel (current state: {mainMenuPanel.activeSelf})");
@@ -309,7 +306,6 @@ public class VehicleSelectionUI : MonoBehaviour
             vehicleSelectionPanel.SetActive(true);
             Debug.Log($"Vehicle selection panel active state after activation: {vehicleSelectionPanel.activeSelf}");
             
-            // Check if panel is visible in hierarchy
             if (!vehicleSelectionPanel.activeInHierarchy)
             {
                 Debug.LogError("Vehicle selection panel is not active in hierarchy! Check parent GameObjects.");
@@ -339,7 +335,6 @@ public class VehicleSelectionUI : MonoBehaviour
         UpdateVehicleDisplay();
     }
     
-    // Test method to manually show the panel
     [ContextMenu("Test Show Vehicle Selection Panel")]
     public void TestShowPanel()
     {

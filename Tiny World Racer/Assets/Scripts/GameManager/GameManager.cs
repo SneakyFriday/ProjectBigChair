@@ -142,13 +142,10 @@ public class GameManager : MonoBehaviour
     
     private System.Collections.IEnumerator RespawnSequence(GameObject player)
     {
-        // Optional: Add fade out effect here
-        
-        yield return new WaitForSeconds(respawnDelay);
+       yield return new WaitForSeconds(respawnDelay);
         
         bool respawnedAtCheckpoint = false;
         
-        // Try checkpoint respawn
         if (CheckpointController.Instance != null)
         {
             Checkpoint lastCheckpoint = CheckpointController.Instance.GetLastCheckpoint();
@@ -162,7 +159,6 @@ public class GameManager : MonoBehaviour
             }
         }
         
-        // Fallback to start position if no checkpoint available
         if (!respawnedAtCheckpoint)
         {
             ResetPlayerToStart(player);
@@ -171,7 +167,6 @@ public class GameManager : MonoBehaviour
                 Debug.Log("No checkpoint available - respawned at start position");
         }
         
-        // Reset velocity if needed
         if (resetVelocityOnRespawn)
         {
             MovementController movement = player.GetComponent<MovementController>();
@@ -182,8 +177,6 @@ public class GameManager : MonoBehaviour
         }
         
         OnPlayerRespawn?.Invoke(player);
-        
-        // Optional: Add fade in effect here
     }
     
     private void ResetPlayerToStart(GameObject player)
@@ -214,7 +207,6 @@ public class GameManager : MonoBehaviour
             Debug.Log("Level Restarted!");
     }
     
-    // Call this from UI buttons or other systems
     public void OnStartButtonPressed()
     {
         StartGame();
