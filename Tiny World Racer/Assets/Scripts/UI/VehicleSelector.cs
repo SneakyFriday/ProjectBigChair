@@ -4,331 +4,330 @@ using System.Collections.Generic;
 [System.Serializable]
 public class VehicleData
 {
-    [Header("Vehicle Info")]
     public string vehicleName = "Vehicle";
     public GameObject vehiclePrefab;
     public Sprite vehicleIcon;
-    
-    [Header("Description")]
     [TextArea(2, 4)]
-    public string description = "Ein tolles Fahrzeug";
+    public string description = "Vehicle description";
     
-    [Header("Stats (nur für Anzeige)")]
+    [Header("Stats (1-5)")]
     [Range(1, 5)] public int speed = 3;
     [Range(1, 5)] public int handling = 3;
     [Range(1, 5)] public int acceleration = 3;
     
     [Header("Camera Settings")]
     public CameraManager.VehicleType vehicleType = CameraManager.VehicleType.Standard;
-    public Vector3 cockpitOffset = Vector3.zero;
 }
 
 public class VehicleSelector : MonoBehaviour
 {
-    public static VehicleSelector Instance { get; private set; }
+    private static VehicleSelector instance;
+    public static VehicleSelector Instance
+    {
+        get
+        {
+            if (instance == null)
+                instance = FindObjectOfType<VehicleSelector>();
+            return instance;
+        }
+    }
     
-    [Header("Available Vehicles")]
+    [Header("Vehicle Configuration")]
     [SerializeField] private List<VehicleData> availableVehicles = new List<VehicleData>();
+    [SerializeField] private int defaultVehicleIndex = 0;
     
     [Header("Spawn Settings")]
     [SerializeField] private Transform spawnPoint;
-    [SerializeField] private bool useCurrentPositionAsSpawn = true;
+    [SerializeField] private bool autoSpawnOnStart = false;
+    [SerializeField] private bool keepPreviewAsPlayer = true;
     
-    [Header("Camera Settings")]
-    [SerializeField] private Camera vehicleCamera;
-    [SerializeField] private bool autoFindCamera = true;
-    [SerializeField] private Vector3 cameraOffset = new Vector3(0, 5, -10);
-    [SerializeField] private bool cameraFollowsVehicle = true;
-    
-    [Header("Game Control")]
-    [SerializeField] private bool lockSelectionDuringGame = true;
-    
-    private GameObject currentVehicle;
-    private bool gameIsActive = false;
-    private MovementController currentMovementController;
-    private int selectedVehicleIndex = 0;
-    
-    // Events
-    public System.Action<VehicleData> OnVehicleChanged;
-    public System.Action<GameObject> OnVehicleSpawned;
+    [Header("Current State")]
+    [SerializeField] private int selectedVehicleIndex = 0;
+    [SerializeField] private GameObject currentVehicleInstance;
     
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (instance != null && instance != this)
         {
             Destroy(gameObject);
             return;
         }
+        instance = this;
         
-        if (autoFindCamera && !vehicleCamera)
-        {
-            vehicleCamera = Camera.main;
-            if (!vehicleCamera)
-            {
-                vehicleCamera = FindObjectOfType<Camera>();
-            }
-        }
-        
-        // Spawn Point setzen falls nicht definiert
-        if (spawnPoint == null && useCurrentPositionAsSpawn)
-        {
-            GameObject spawnObj = new GameObject("VehicleSpawnPoint");
-            spawnPoint = spawnObj.transform;
-            spawnPoint.position = transform.position;
-            spawnPoint.rotation = transform.rotation;
-        }
+        selectedVehicleIndex = defaultVehicleIndex;
     }
     
     private void Start()
     {
-        // Erstes Fahrzeug spawnen falls noch keins existiert
-        if (currentVehicle == null && availableVehicles.Count > 0)
+        // Subscribe to GameManager events if available
+        if (GameManager.Instance != null)
         {
-            SpawnVehicle(selectedVehicleIndex, false);
+            GameManager.Instance.OnGameStart.AddListener(OnGameStart);
+            
+            // If autoSpawn is enabled and game is already started, spawn now
+            if (autoSpawnOnStart && GameManager.Instance.IsGameStarted)
+            {
+                SpawnSelectedVehicle();
+            }
+        }
+        else if (autoSpawnOnStart)
+        {
+            // If no GameManager, spawn immediately if autoSpawn is enabled
+            SpawnSelectedVehicle();
         }
     }
     
-    /// <summary>
-    /// Spawnt das ausgewählte Fahrzeug
-    /// </summary>
-    public void SpawnVehicle(int vehicleIndex, bool preservePosition = true)
+    private void OnDestroy()
     {
-        // Prüfen ob Fahrzeugwechsel während des Spiels gesperrt ist
-        if (lockSelectionDuringGame && gameIsActive)
+        if (GameManager.Instance != null)
         {
-            Debug.LogWarning("Vehicle selection is locked during gameplay!");
-            return;
+            GameManager.Instance.OnGameStart.RemoveListener(OnGameStart);
         }
-        
-        if (vehicleIndex < 0 || vehicleIndex >= availableVehicles.Count)
+    }
+    
+    private void OnGameStart()
+    {
+        SpawnSelectedVehicle();
+    }
+    
+    /// <summary>
+    /// Spawns the currently selected vehicle at the spawn point
+    /// </summary>
+    public void SpawnSelectedVehicle()
+    {
+        // If we already have a vehicle (from preview) and keepPreviewAsPlayer is enabled, don't spawn a new one
+        if (currentVehicleInstance != null && keepPreviewAsPlayer)
         {
-            Debug.LogError($"Invalid vehicle index: {vehicleIndex}");
-            return;
-        }
-        
-        VehicleData selectedVehicle = availableVehicles[vehicleIndex];
-        if (selectedVehicle.vehiclePrefab == null)
-        {
-            Debug.LogError($"Vehicle prefab is null for {selectedVehicle.vehicleName}");
-            return;
-        }
-        
-        Vector3 spawnPosition = spawnPoint.position;
-        Quaternion spawnRotation = spawnPoint.rotation;
-        
-        // Position vom aktuellen Fahrzeug übernehmen falls gewünscht
-        if (preservePosition && currentVehicle != null)
-        {
-            spawnPosition = currentVehicle.transform.position;
-            spawnRotation = currentVehicle.transform.rotation;
-        }
-        
-        // Altes Fahrzeug entfernen
-        if (currentVehicle != null)
-        {
-            DestroyImmediate(currentVehicle);
-        }
-        
-        // Neues Fahrzeug spawnen
-        currentVehicle = Instantiate(selectedVehicle.vehiclePrefab, spawnPosition, spawnRotation);
-        currentVehicle.name = selectedVehicle.vehicleName;
-        
-        // Stelle sicher, dass das Fahrzeug den Player-Tag hat
-        if (!currentVehicle.CompareTag("Player"))
-        {
-            currentVehicle.tag = "Player";
-            Debug.Log($"Added Player tag to {selectedVehicle.vehicleName}");
-        }
-        
-        // MovementController referenzieren
-        currentMovementController = currentVehicle.GetComponent<MovementController>();
-        if (currentMovementController == null)
-        {
-            Debug.LogError($"No MovementController found on {selectedVehicle.vehicleName}!");
-        }
-        
-        // Kamera-Setup
-        SetupCamera();
-        
-        // Index aktualisieren
-        selectedVehicleIndex = vehicleIndex;
-        
-        // Kamera-Manager über Fahrzeugwechsel informieren
-        if (CameraManager.Instance != null)
-        {
-            CameraManager.Instance.SetFollowTarget(currentVehicle.transform);
-            
-            // Cockpit-Einstellungen für dieses Fahrzeug anwenden
-            if (selectedVehicle.vehicleType != CameraManager.VehicleType.Standard)
+            // Just rename it from preview to player
+            if (currentVehicleInstance.name.Contains("(Preview)"))
             {
-                CameraManager.Instance.SetCockpitPreset(selectedVehicle.vehicleType);
+                VehicleData currentVehicle = availableVehicles[selectedVehicleIndex];
+                currentVehicleInstance.name = currentVehicle.vehicleName + " (Player)";
+                Debug.Log($"Converted preview vehicle to player vehicle: {currentVehicle.vehicleName}");
+                return;
             }
             else
             {
-                CameraManager.Instance.SetCockpitOffset(selectedVehicle.cockpitOffset, true);
+                Debug.Log("Vehicle already spawned, skipping spawn");
+                return;
             }
         }
         
-        // Events auslösen
-        OnVehicleChanged?.Invoke(selectedVehicle);
-        OnVehicleSpawned?.Invoke(currentVehicle);
-        
-        Debug.Log($"Spawned vehicle: {selectedVehicle.vehicleName}");
-    }
-    
-    private void SetupCamera()
-    {
-        if (vehicleCamera == null || currentVehicle == null) return;
-        
-        if (cameraFollowsVehicle)
+        // Remove existing vehicle if any
+        if (currentVehicleInstance != null)
         {
-            // Kamera als Child des Fahrzeugs setzen
-            vehicleCamera.transform.SetParent(currentVehicle.transform);
-            vehicleCamera.transform.localPosition = cameraOffset;
-            vehicleCamera.transform.localRotation = Quaternion.identity;
+            Destroy(currentVehicleInstance);
         }
-    }
-    
-    /// <summary>
-    /// Wählt das nächste Fahrzeug in der Liste (nur wenn Spiel nicht läuft)
-    /// </summary>
-    public void SelectNextVehicle()
-    {
-        if (lockSelectionDuringGame && gameIsActive)
+        
+        // Check if we have vehicles configured
+        if (availableVehicles.Count == 0)
         {
-            Debug.LogWarning("Cannot change vehicle during gameplay!");
+            Debug.LogError("No vehicles configured in VehicleSelector!");
             return;
         }
         
-        int nextIndex = (selectedVehicleIndex + 1) % availableVehicles.Count;
-        SpawnVehicle(nextIndex);
-    }
-    
-    /// <summary>
-    /// Wählt das vorherige Fahrzeug in der Liste (nur wenn Spiel nicht läuft)
-    /// </summary>
-    public void SelectPreviousVehicle()
-    {
-        if (lockSelectionDuringGame && gameIsActive)
+        // Validate index
+        if (selectedVehicleIndex < 0 || selectedVehicleIndex >= availableVehicles.Count)
         {
-            Debug.LogWarning("Cannot change vehicle during gameplay!");
+            Debug.LogWarning($"Invalid vehicle index {selectedVehicleIndex}, using default");
+            selectedVehicleIndex = 0;
+        }
+        
+        // Get selected vehicle data
+        VehicleData selectedVehicle = availableVehicles[selectedVehicleIndex];
+        
+        if (selectedVehicle.vehiclePrefab == null)
+        {
+            Debug.LogError($"Vehicle {selectedVehicle.vehicleName} has no prefab assigned!");
             return;
         }
         
-        int prevIndex = (selectedVehicleIndex - 1 + availableVehicles.Count) % availableVehicles.Count;
-        SpawnVehicle(prevIndex);
+        // Determine spawn position and rotation
+        Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
+        Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+        
+        // Spawn the vehicle
+        currentVehicleInstance = Instantiate(selectedVehicle.vehiclePrefab, spawnPosition, spawnRotation);
+        currentVehicleInstance.name = selectedVehicle.vehicleName + " (Player)";
+        
+        // Update CameraManager to follow the new vehicle
+        if (CameraManager.Instance != null)
+        {
+            CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
+            CameraManager.Instance.SetCockpitPreset(selectedVehicle.vehicleType);
+            Debug.Log($"CameraManager updated to follow {selectedVehicle.vehicleName} with {selectedVehicle.vehicleType} preset");
+        }
+        
+        Debug.Log($"Spawned vehicle: {selectedVehicle.vehicleName} at {spawnPosition}");
     }
     
     /// <summary>
-    /// Wählt ein spezifisches Fahrzeug (nur wenn Spiel nicht läuft)
+    /// Spawns a vehicle for preview (without starting the game)
+    /// </summary>
+    public void SpawnPreviewVehicle(int index)
+    {
+        // Validate index
+        if (index < 0 || index >= availableVehicles.Count)
+        {
+            Debug.LogWarning($"Invalid preview vehicle index: {index}");
+            return;
+        }
+        
+        // Remove existing vehicle if any
+        if (currentVehicleInstance != null)
+        {
+            Destroy(currentVehicleInstance);
+        }
+        
+        VehicleData vehicleToPreview = availableVehicles[index];
+        
+        if (vehicleToPreview.vehiclePrefab == null)
+        {
+            Debug.LogError($"Vehicle {vehicleToPreview.vehicleName} has no prefab assigned!");
+            return;
+        }
+        
+        // Determine spawn position and rotation
+        Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
+        Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+        
+        // Spawn the vehicle
+        currentVehicleInstance = Instantiate(vehicleToPreview.vehiclePrefab, spawnPosition, spawnRotation);
+        currentVehicleInstance.name = vehicleToPreview.vehicleName + " (Preview)";
+        
+        // Update CameraManager to follow the preview vehicle
+        if (CameraManager.Instance != null)
+        {
+            CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
+            CameraManager.Instance.SetCockpitPreset(vehicleToPreview.vehicleType);
+        }
+        
+        Debug.Log($"Spawned preview vehicle: {vehicleToPreview.vehicleName}");
+    }
+    
+    /// <summary>
+    /// Select a vehicle by index
     /// </summary>
     public void SelectVehicle(int index)
     {
-        if (lockSelectionDuringGame && gameIsActive)
+        if (index >= 0 && index < availableVehicles.Count)
         {
-            Debug.LogWarning("Cannot change vehicle during gameplay!");
-            return;
+            selectedVehicleIndex = index;
+            Debug.Log($"Selected vehicle: {availableVehicles[index].vehicleName}");
+            
+            // If we already have a preview vehicle and it's the selected one, just rename it
+            if (currentVehicleInstance != null && currentVehicleInstance.name.Contains("(Preview)"))
+            {
+                currentVehicleInstance.name = availableVehicles[index].vehicleName + " (Player)";
+            }
         }
-        
-        SpawnVehicle(index);
-    }
-    
-    /// <summary>
-    /// Setzt die Spawn-Position auf die aktuelle Fahrzeug-Position
-    /// </summary>
-    public void UpdateSpawnPoint()
-    {
-        if (currentVehicle != null && spawnPoint != null)
+        else
         {
-            spawnPoint.position = currentVehicle.transform.position;
-            spawnPoint.rotation = currentVehicle.transform.rotation;
+            Debug.LogWarning($"Invalid vehicle index: {index}");
         }
     }
     
-    // GETTER METHODEN
-    
-    public List<VehicleData> GetAvailableVehicles() => availableVehicles;
-    public VehicleData GetCurrentVehicleData() => selectedVehicleIndex < availableVehicles.Count ? availableVehicles[selectedVehicleIndex] : null;
-    public GameObject GetCurrentVehicle() => currentVehicle;
-    public MovementController GetCurrentMovementController() => currentMovementController;
-    public int GetSelectedVehicleIndex() => selectedVehicleIndex;
-    public int GetVehicleCount() => availableVehicles.Count;
-    
-    // GAME STATE MANAGEMENT METHODS
-    
     /// <summary>
-    /// Startet das Spiel und sperrt die Fahrzeugauswahl
+    /// Get the currently selected vehicle data
     /// </summary>
-    public void StartGame()
+    public VehicleData GetCurrentVehicleData()
     {
-        gameIsActive = true;
-        Debug.Log("Game started - Vehicle selection locked");
+        if (selectedVehicleIndex >= 0 && selectedVehicleIndex < availableVehicles.Count)
+        {
+            return availableVehicles[selectedVehicleIndex];
+        }
+        return null;
     }
     
     /// <summary>
-    /// Stoppt das Spiel und gibt die Fahrzeugauswahl wieder frei
+    /// Get all available vehicles
     /// </summary>
-    public void StopGame()
+    public List<VehicleData> GetAvailableVehicles()
     {
-        gameIsActive = false;
-        Debug.Log("Game stopped - Vehicle selection unlocked");
+        return availableVehicles;
     }
     
     /// <summary>
-    /// Prüft ob das Spiel gerade läuft
+    /// Get the number of available vehicles
     /// </summary>
-    public bool IsGameActive() => gameIsActive;
+    public int GetVehicleCount()
+    {
+        return availableVehicles.Count;
+    }
     
     /// <summary>
-    /// Prüft ob Fahrzeugauswahl aktuell verfügbar ist
+    /// Get the currently selected vehicle index
+    /// </summary>
+    public int GetSelectedVehicleIndex()
+    {
+        return selectedVehicleIndex;
+    }
+    
+    /// <summary>
+    /// Check if vehicle selection is available (not during gameplay)
     /// </summary>
     public bool IsVehicleSelectionAvailable()
     {
-        return !lockSelectionDuringGame || !gameIsActive;
+        // Only allow vehicle selection when game hasn't started
+        if (GameManager.Instance != null)
+        {
+            return !GameManager.Instance.IsGameStarted;
+        }
+        return true;
     }
     
     /// <summary>
-    /// Fügt ein neues Fahrzeug zur Liste hinzu
+    /// Get the current vehicle instance
     /// </summary>
-    public void AddVehicle(VehicleData vehicleData)
+    public GameObject GetCurrentVehicleInstance()
     {
-        if (vehicleData != null && vehicleData.vehiclePrefab != null)
+        return currentVehicleInstance;
+    }
+    
+    /// <summary>
+    /// Get the current vehicle GameObject (for CameraManager compatibility)
+    /// </summary>
+    public GameObject GetCurrentVehicle()
+    {
+        return currentVehicleInstance;
+    }
+    
+    /// <summary>
+    /// Manually respawn the vehicle at spawn point
+    /// </summary>
+    public void RespawnVehicle()
+    {
+        if (currentVehicleInstance != null)
         {
-            availableVehicles.Add(vehicleData);
-            Debug.Log($"Added vehicle: {vehicleData.vehicleName}");
+            Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
+            Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+            
+            currentVehicleInstance.transform.position = spawnPosition;
+            currentVehicleInstance.transform.rotation = spawnRotation;
+            
+            // Reset velocity if vehicle has MovementController
+            MovementController movement = currentVehicleInstance.GetComponent<MovementController>();
+            if (movement != null)
+            {
+                movement.ResetVelocity();
+            }
+            
+            // Update camera to make sure it's still following
+            if (CameraManager.Instance != null)
+            {
+                CameraManager.Instance.SetFollowTarget(currentVehicleInstance.transform);
+            }
         }
     }
     
-    /// <summary>
-    /// Entfernt ein Fahrzeug aus der Liste
-    /// </summary>
-    public void RemoveVehicle(int index)
+    // Draw spawn point in editor
+    private void OnDrawGizmos()
     {
-        if (index >= 0 && index < availableVehicles.Count)
+        if (spawnPoint != null)
         {
-            string vehicleName = availableVehicles[index].vehicleName;
-            availableVehicles.RemoveAt(index);
-            
-            // Falls das aktuell ausgewählte Fahrzeug entfernt wurde
-            if (selectedVehicleIndex == index)
-            {
-                selectedVehicleIndex = Mathf.Clamp(selectedVehicleIndex, 0, availableVehicles.Count - 1);
-                if (availableVehicles.Count > 0)
-                {
-                    SpawnVehicle(selectedVehicleIndex);
-                }
-            }
-            else if (selectedVehicleIndex > index)
-            {
-                selectedVehicleIndex--;
-            }
-            
-            Debug.Log($"Removed vehicle: {vehicleName}");
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireCube(spawnPoint.position, Vector3.one);
+            Gizmos.DrawRay(spawnPoint.position, spawnPoint.forward * 2f);
         }
     }
 }

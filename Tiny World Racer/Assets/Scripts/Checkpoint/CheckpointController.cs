@@ -72,4 +72,10 @@ public class CheckpointController : MonoBehaviour
     {
         return checkpoints[lastCheckpointReached];
     }
+    
+    public void ResetCheckpoints()
+    {
+        lapStarted = false;
+        nextCheckpointIndex = 0;
+    }
 }
