@@ -19,24 +19,20 @@ public class CockpitCameraController : MonoBehaviour
         
         if (rotateWithTarget)
         {
-            // Kamera rotiert exakt mit dem Auto
             if (smoothFollow)
             {
-                // Smooth Follow
                 Vector3 targetPosition = target.position + target.TransformDirection(offset);
                 transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * followSpeed);
                 transform.rotation = Quaternion.Lerp(transform.rotation, target.rotation, Time.deltaTime * followSpeed);
             }
             else
             {
-                // Direkte Synchronisation (empfohlen für Cockpit)
                 transform.position = target.position + target.TransformDirection(offset);
                 transform.rotation = target.rotation;
             }
         }
         else
         {
-            // Nur Position folgen, nicht rotieren
             Vector3 targetPosition = target.position + offset;
             if (smoothFollow)
             {
@@ -58,13 +54,11 @@ public class CockpitCameraController : MonoBehaviour
     {
         if (target != null)
         {
-            // Zeige Offset-Position in der Scene-View
             Gizmos.color = Color.cyan;
             Vector3 targetPos = target.position + (rotateWithTarget ? target.TransformDirection(offset) : offset);
             Gizmos.DrawWireSphere(targetPos, 0.2f);
             Gizmos.DrawLine(target.position, targetPos);
             
-            // Zeige Blickrichtung
             Gizmos.color = Color.blue;
             Vector3 forward = rotateWithTarget ? target.forward : transform.forward;
             Gizmos.DrawRay(targetPos, forward * 2f);
