@@ -25,6 +25,7 @@ public class CameraManager : MonoBehaviour
     
     [Header("Auto-Setup")]
     [SerializeField] private bool autoFindExistingCamera = true;
+    [SerializeField] private VehicleSelector vehicleSelector;
     
     private InputAction cameraAction;
     private int currentCameraIndex = 0;
@@ -163,19 +164,9 @@ public class CameraManager : MonoBehaviour
     {
         if (!followTarget)
         {
-            VehicleSelector vehicleSelector = FindFirstObjectByType<VehicleSelector>();
             if (vehicleSelector)
             {
                 followTarget = vehicleSelector.GetCurrentVehicle()?.transform;
-            }
-            
-            if (!followTarget)
-            {
-                MovementController controller = FindFirstObjectByType<MovementController>();
-                if (controller)
-                {
-                    followTarget = controller.transform;
-                }
             }
             
             if (!followTarget)

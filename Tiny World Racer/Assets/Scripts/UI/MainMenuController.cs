@@ -10,11 +10,13 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] GameObject mainMenuPanel;
     [SerializeField] GameObject settingsPanel;
     [SerializeField] GameObject timeOverviewPanel;
+    [SerializeField] VehicleSelectionUI vehicleSelectionUI;
     
     [Header("Main Menu Buttons")]
     [SerializeField] Button playButton;
     [SerializeField] Button settingsButton;
     [SerializeField] Button quitButton;
+    [SerializeField] Button vehicleSelectButton;
     
     [Header("Settings")]
     [SerializeField] Slider volumeSlider;
@@ -25,10 +27,6 @@ public class MainMenuController : MonoBehaviour
     [Header("Scene Settings")]
     public string gameSceneName = "GameScene"; // Falls wir in der Pro Version mit Scenes arbeiten sollten :P
     
-    [Header("Game Control")]
-    [SerializeField] MovementController movementController;
-    [SerializeField] bool autoFindMovementController = true;
-    
     private InputAction escapeAction;
     private bool isGameActive = false;
     
@@ -38,6 +36,7 @@ public class MainMenuController : MonoBehaviour
         settingsButton.onClick.AddListener(OpenSettings);
         quitButton.onClick.AddListener(QuitGame);
         backButton.onClick.AddListener(BackToMainMenu);
+        vehicleSelectButton.onClick.AddListener(OpenVehicleSelection);
         
         LoadSettings();
        
@@ -45,22 +44,23 @@ public class MainMenuController : MonoBehaviour
         fullscreenToggle.onValueChanged.AddListener(SetFullscreen);
         qualityDropdown.onValueChanged.AddListener(SetQuality);
         
+        var btnTxt = playButton.GetComponentInChildren<TextMeshProUGUI>();
+        btnTxt.text = "Start";
+        
         InitializeEscapeInput();
-        
-        if (autoFindMovementController && !movementController)
-        {
-            movementController = FindFirstObjectByType<MovementController>();
-            if (!movementController)
-            {
-                Debug.LogWarning("MovementController konnte nicht gefunden werden! Bitte manuell zuweisen.");
-            }
-            else
-            {
-                Debug.Log("MovementController automatisch gefunden und zugewiesen.");
-            }
-        }
-        
         ShowMainMenu();
+    }
+
+    private void OnDisable()
+    {
+        playButton.onClick.RemoveAllListeners();
+        settingsButton.onClick.RemoveAllListeners();
+        quitButton.onClick.RemoveAllListeners();
+        backButton.onClick.RemoveAllListeners();
+        vehicleSelectButton.onClick.RemoveAllListeners();
+        volumeSlider.onValueChanged.RemoveAllListeners();
+        fullscreenToggle.onValueChanged.RemoveAllListeners();
+        qualityDropdown.onValueChanged.RemoveAllListeners();
     }
 
     private void Update()
@@ -79,6 +79,11 @@ public class MainMenuController : MonoBehaviour
             escapeAction = new InputAction("Escape", binding: "<Keyboard>/escape");
             escapeAction.Enable();
         }
+    }
+    
+    void OpenVehicleSelection()
+    {
+        vehicleSelectionUI.OpenVehicleSelection();
     }
     
     private void HandleEscapePressed()
@@ -100,9 +105,9 @@ public class MainMenuController : MonoBehaviour
         timeOverviewPanel.SetActive(true);
         isGameActive = true;
         
-        if (movementController)
+        if (GameManager.Instance)
         {
-            movementController.StartGame();
+            GameManager.Instance.StartGame();
             Debug.Log("Game started - Movement controls unlocked!");
         }
         else
@@ -123,9 +128,9 @@ public class MainMenuController : MonoBehaviour
         ShowMainMenu();
         isGameActive = false;
         
-        if (movementController && movementController.IsGameStarted)
+        if (GameManager.Instance.IsGameStarted)
         {
-            movementController.StopGame();
+            GameManager.Instance.StopGame();
             Debug.Log("Returned to main menu - Movement controls locked!");
         }
     }
@@ -195,23 +200,19 @@ public class MainMenuController : MonoBehaviour
     
     public void PauseGame()
     {
-        if (movementController)
+        if (GameManager.Instance)
         {
-            movementController.StopGame();
+            GameManager.Instance.StopGame();
         }
+        playButton.onClick.RemoveAllListeners();
+        var btnTxt = playButton.GetComponentInChildren<TextMeshProUGUI>();
+        btnTxt.text = "Restart";
+        playButton.onClick.AddListener(GameManager.Instance.RestartLevel);
         ShowMainMenu();
     }
     
     public bool IsGameRunning()
     {
-        return movementController && movementController.IsGameStarted;
-    }
-    
-    private void OnDestroy()
-    {
-        if (escapeAction == null) return;
-        
-        escapeAction.Disable();
-        escapeAction.Dispose();
+        return GameManager.Instance.IsGameStarted;
     }
 }
