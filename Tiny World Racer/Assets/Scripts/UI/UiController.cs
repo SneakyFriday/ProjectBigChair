@@ -1,146 +1,159 @@
 using UnityEngine;
 using TMPro;
-using System;
 
 public class UiController : MonoBehaviour
 {
+    [Header("Haupt-Zeit-Anzeige")]
     [SerializeField] private TMP_Text currentTotalLapTimeText;
+    
+    [Header("Sektor-Anzeigen (A-E)")]
     [SerializeField] private TMP_Text currentSplitATimeText;
     [SerializeField] private TMP_Text currentSplitBTimeText;
     [SerializeField] private TMP_Text currentSplitCTimeText;
     [SerializeField] private TMP_Text currentSplitDTimeText;
     [SerializeField] private TMP_Text currentSplitETimeText;
 
-    [SerializeField] private TMP_Text fastestTotalLapTimeText;
-    [SerializeField] private TMP_Text fastestSplitATimeText;
-    [SerializeField] private TMP_Text fastestSplitBTimeText;
-    [SerializeField] private TMP_Text fastestSplitCTimeText;
-    [SerializeField] private TMP_Text fastestSplitDTimeText;
-    [SerializeField] private TMP_Text fastestSplitETimeText;
+    [Header("=== LAP TIMES PANEL (rechts oben) ===")]
+    [SerializeField] private TMP_Text bestTotalLapTimeText;
+    [SerializeField] private TMP_Text lastTotalLapTimeText;
+    [SerializeField] private TMP_Text l1TotalLapTimeText;
+    [SerializeField] private TMP_Text l2TotalLapTimeText;
 
-    [SerializeField] private TMP_Text last1TotalLapTimeText;
-    [SerializeField] private TMP_Text last1fastestSplitATimeText;
-    [SerializeField] private TMP_Text last1fastestSplitBTimeText;
-    [SerializeField] private TMP_Text last1fastestSplitCTimeText;
-    [SerializeField] private TMP_Text last1fastestSplitDTimeText;
-    [SerializeField] private TMP_Text last1fastestSplitETimeText;
-
-    [SerializeField] private TMP_Text last2TotalLapTimeText;
-    [SerializeField] private TMP_Text last2fastestSplitATimeText;
-    [SerializeField] private TMP_Text last2fastestSplitBTimeText;
-    [SerializeField] private TMP_Text last2fastestSplitCTimeText;
-    [SerializeField] private TMP_Text last2fastestSplitDTimeText;
-    [SerializeField] private TMP_Text last2fastestSplitETimeText;
-
-    [SerializeField] private TMP_Text last3TotalLapTimeText;
-    [SerializeField] private TMP_Text last3fastestSplitATimeText;
-    [SerializeField] private TMP_Text last3fastestSplitBTimeText;
-    [SerializeField] private TMP_Text last3fastestSplitCTimeText;
-    [SerializeField] private TMP_Text last3fastestSplitDTimeText;
-    [SerializeField] private TMP_Text last3fastestSplitETimeText;
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         CheckpointController.Instance.OnLapStart += OnLapStartHandler;
         CheckpointController.Instance.OnCheckpointReached += OnCheckpointReachedHandler;
         CheckpointController.Instance.OnLapEnd += OnLapEndHandler;
+        
+        ResetCurrentLapDisplay();
+        UpdateLapTimesDisplay();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        currentTotalLapTimeText.text = "Time: " + LapTimer.Instance.GetElapsedTimeMs().ToString();
+        int currentTime = LapTimer.Instance.GetElapsedTimeMs();
+        int bestTime = LapTimeController.Instance.GetFastestLapTime()?.TotalTimeMs ?? 0;
+        
+        if (bestTime > 0 && currentTime > bestTime)
+        {
+            currentTotalLapTimeText.text = $"<color=#ff6b6b>{TimeFormatter.FormatRaceTime(currentTime)}</color>";
+        }
+        else if (bestTime > 0 && currentTime < bestTime)
+        {
+            currentTotalLapTimeText.text = $"<color=#00ff88>{TimeFormatter.FormatRaceTime(currentTime)}</color>";
+        }
+        else
+        {
+            currentTotalLapTimeText.text = $"<color=#00ff88>{TimeFormatter.FormatRaceTime(currentTime)}</color>";
+        }
     }
 
     private void OnDisable()
     {
-        CheckpointController.Instance.OnLapStart -= OnLapStartHandler;
-        CheckpointController.Instance.OnCheckpointReached -= OnCheckpointReachedHandler;
-        CheckpointController.Instance.OnLapStart -= OnLapStartHandler;
+        if (CheckpointController.Instance)
+        {
+            CheckpointController.Instance.OnLapStart -= OnLapStartHandler;
+            CheckpointController.Instance.OnCheckpointReached -= OnCheckpointReachedHandler;
+            CheckpointController.Instance.OnLapEnd -= OnLapEndHandler;
+        }
     }
 
     private void OnLapStartHandler()
     {
         Debug.Log("UiController.OnLapStartHandler()");
+        ResetCurrentLapDisplay();
     }
 
     private void OnCheckpointReachedHandler(int checkPointId)
     {
-        Debug.Log("UiController.OnCheckpointReachedHandler()");
+        Debug.Log($"UiController.OnCheckpointReachedHandler() - Checkpoint {checkPointId}");
+        
+        int splitTime = LapTimer.Instance.GetLastSplitTimeMs();
+        string formattedSplitTime = TimeFormatter.FormatSplitTime(splitTime);
+        
+        string coloredSplitTime = $"<color=#00ff88>{formattedSplitTime}</color>";
+        
         switch (checkPointId)
         {
             case 0:
-                currentSplitETimeText.text = "Part E: " + LapTimer.Instance.GetLastSplitTimeMs().ToString();
+                currentSplitETimeText.text = $"E: {coloredSplitTime}";
                 break;
             case 1:
-                currentSplitATimeText.text = "Part A: " + LapTimer.Instance.GetLastSplitTimeMs().ToString();
+                currentSplitATimeText.text = $"A: {coloredSplitTime}";
                 break;
             case 2:
-                currentSplitBTimeText.text = "Part B: " + LapTimer.Instance.GetLastSplitTimeMs().ToString();
+                currentSplitBTimeText.text = $"B: {coloredSplitTime}";
                 break;
-            case 3:
-                currentSplitCTimeText.text = "Part C: " + LapTimer.Instance.GetLastSplitTimeMs().ToString();
+            case 3:  
+                currentSplitCTimeText.text = $"C: {coloredSplitTime}";
                 break;
             case 4:
-                currentSplitDTimeText.text = "Part D: " + LapTimer.Instance.GetLastSplitTimeMs().ToString();
-                break;
-            default:
+                currentSplitDTimeText.text = $"D: {coloredSplitTime}";
                 break;
         }
-    }
-
-    private void UpdateFastestLapText()
-    {
-        LapTime fastestLapTime = LapTimeController.Instance.GetFastestLapTime();
-
-        fastestTotalLapTimeText.text = "Time: " + fastestLapTime.TotalTimeMs.ToString();
-        fastestSplitATimeText.text = "Part A: " + fastestLapTime.SplitTimeA.ToString();
-        fastestSplitBTimeText.text = "Part B: " + fastestLapTime.SplitTimeB.ToString();
-        fastestSplitCTimeText.text = "Part C: " + fastestLapTime.SplitTimeC.ToString();
-        fastestSplitDTimeText.text = "Part D: " + fastestLapTime.SplitTimeD.ToString();
-        fastestSplitETimeText.text = "Part E: " + fastestLapTime.SplitTimeE.ToString();
-    }
-
-    private void UpdateLastLapsText()
-    {
-        LapTime fastestLapTime = LapTimeController.Instance.GetLapTimeByIndex(0);
-
-        last1TotalLapTimeText.text = fastestLapTime.TotalTimeMs.ToString();
-        last1fastestSplitATimeText.text = fastestLapTime.SplitTimeA.ToString();
-        last1fastestSplitBTimeText.text = fastestLapTime.SplitTimeB.ToString();
-        last1fastestSplitCTimeText.text = fastestLapTime.SplitTimeC.ToString();
-        last1fastestSplitDTimeText.text = fastestLapTime.SplitTimeD.ToString();
-        last1fastestSplitETimeText.text = fastestLapTime.SplitTimeE.ToString();
-
-        fastestLapTime = LapTimeController.Instance.GetLapTimeByIndex(1);
-
-        last2TotalLapTimeText.text = fastestLapTime.TotalTimeMs.ToString();
-        last2fastestSplitATimeText.text = fastestLapTime.SplitTimeA.ToString();
-        last2fastestSplitBTimeText.text = fastestLapTime.SplitTimeB.ToString();
-        last2fastestSplitCTimeText.text = fastestLapTime.SplitTimeC.ToString();
-        last2fastestSplitDTimeText.text = fastestLapTime.SplitTimeD.ToString();
-        last2fastestSplitETimeText.text = fastestLapTime.SplitTimeE.ToString();
-
-        fastestLapTime = LapTimeController.Instance.GetLapTimeByIndex(2);
-
-        last3TotalLapTimeText.text = fastestLapTime.TotalTimeMs.ToString();
-        last3fastestSplitATimeText.text = fastestLapTime.SplitTimeA.ToString();
-        last3fastestSplitBTimeText.text = fastestLapTime.SplitTimeB.ToString();
-        last3fastestSplitCTimeText.text = fastestLapTime.SplitTimeC.ToString();
-        last3fastestSplitDTimeText.text = fastestLapTime.SplitTimeD.ToString();
-        last3fastestSplitETimeText.text = fastestLapTime.SplitTimeE.ToString();
     }
 
     private void OnLapEndHandler()
     {
         Debug.Log("UiController.OnLapEndHandler()");
-        UpdateFastestLapText();
-        UpdateLastLapsText();
-        currentSplitATimeText.text = "Part A: " + 0;
-        currentSplitBTimeText.text = "Part B: " + 0;
-        currentSplitCTimeText.text = "Part C: " + 0;
-        currentSplitDTimeText.text = "Part D: " + 0;
-        currentSplitETimeText.text = "Part E: " + 0;
+        UpdateLapTimesDisplay();
+        
+        Invoke(nameof(ResetCurrentLapDisplay), 0.5f);
+    }
+
+    private void UpdateLapTimesDisplay()
+    {
+        // Beste Zeit
+        LapTime fastestLap = LapTimeController.Instance.GetFastestLapTime();
+        if (fastestLap != null && fastestLap.TotalTimeMs > 0)
+        {
+            bestTotalLapTimeText.text = $"<color=#ffd700>{TimeFormatter.FormatRaceTime(fastestLap.TotalTimeMs)}</color>";
+        }
+        else
+        {
+            bestTotalLapTimeText.text = "<color=#ffd700>--:--.---</color>";
+        }
+
+        // Letzte Zeit (neueste)
+        LapTime lastLap = LapTimeController.Instance.GetLapTimeByIndex(2);
+        if (lastLap != null && lastLap.TotalTimeMs > 0)
+        {
+            lastTotalLapTimeText.text = $"<color=#ff6b6b>{TimeFormatter.FormatRaceTime(lastLap.TotalTimeMs)}</color>";
+        }
+        else
+        {
+            lastTotalLapTimeText.text = "<color=#ff6b6b>--:--.---</color>";
+        }
+
+        // L-1 Zeit
+        LapTime l1Lap = LapTimeController.Instance.GetLapTimeByIndex(1);
+        if (l1Lap != null && l1Lap.TotalTimeMs > 0)
+        {
+            l1TotalLapTimeText.text = $"<color=#cccccc>{TimeFormatter.FormatRaceTime(l1Lap.TotalTimeMs)}</color>";
+        }
+        else
+        {
+            l1TotalLapTimeText.text = "<color=#cccccc>--:--.---</color>";
+        }
+
+        // L-2 Zeit
+        LapTime l2Lap = LapTimeController.Instance.GetLapTimeByIndex(0);
+        if (l2Lap != null && l2Lap.TotalTimeMs > 0)
+        {
+            l2TotalLapTimeText.text = $"<color=#cccccc>{TimeFormatter.FormatRaceTime(l2Lap.TotalTimeMs)}</color>";
+        }
+        else
+        {
+            l2TotalLapTimeText.text = "<color=#cccccc>--:--.---</color>";
+        }
+    }
+
+    private void ResetCurrentLapDisplay()
+    {
+        currentSplitATimeText.text = "A: <color=#ffffff66>---.---</color>";
+        currentSplitBTimeText.text = "B: <color=#ffffff66>---.---</color>";
+        currentSplitCTimeText.text = "C: <color=#ffffff66>---.---</color>";
+        currentSplitDTimeText.text = "D: <color=#ffffff66>---.---</color>";
+        currentSplitETimeText.text = "E: <color=#ffffff66>---.---</color>";
     }
 }

@@ -379,7 +379,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6414938611353320765}
-  m_Material: {fileID: 13400000, guid: 15713eff5bf2b3340b52d1d57c772d61, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -414,7 +414,7 @@ MonoBehaviour:
   maxSpeed: 100
   drag: 0.98
   traction: 2
-  steerAngle: 15
+  steerAngle: 20
   steeringSmoothness: 0.1
   speedSteerFactor: 0.7
   maxSteerSpeed: 100
@@ -423,7 +423,7 @@ MonoBehaviour:
   handbrakeDrag: 0.93
   handbrakeSteerMultiplier: 1.5
   handbrakeRecoverySpeed: 2
-  showGroundDebug: 1
+  showGroundDebug: 0
   groundTag: Ground
   airControlDelay: 0.2
   airDrag: 0.995

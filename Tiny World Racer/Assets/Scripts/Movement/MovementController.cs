@@ -268,7 +268,7 @@ public class MovementController : MonoBehaviour
         
         float currentDrag = CalculateDrag();
         
-        currentSpeed *= currentDrag;
+        currentSpeed *= Mathf.Pow(currentDrag, Time.deltaTime * 60f);
         currentSpeed = Mathf.Clamp(currentSpeed, -maxSpeed, maxSpeed);
         
         if (Mathf.Abs(currentSpeed) < 0.01f)
